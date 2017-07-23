@@ -5,6 +5,8 @@ package test;
  */
 
 
+import org.nd4j.linalg.factory.Nd4j;
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -12,6 +14,7 @@ import java.util.stream.Collectors;
 public class App
 {
     public static void main(String[] args) throws Exception {
+        Nd4j.getRandom().setSeed(1234);
         System.out.println("nd4h-conv-benchmarks driver");
         if (args.length < 1) {
             System.out.println("Arguments can be:");

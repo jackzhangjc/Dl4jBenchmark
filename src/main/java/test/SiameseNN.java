@@ -42,30 +42,38 @@ public class SiameseNN {
 
     // For benchmarking purposes - we don't need getters and setters for weights of this network
 
-    private INDArray getConvFeatureMaps(INDArray input, INDArray filters, INDArray biases) {
+    private INDArray getConvFeatureMapsDL4J(INDArray input, INDArray filters, INDArray biases) {
         int kernelWidth = 5;
         int padding = 4;
         INDArray questionConvFeatureMaps = Nd4j.zeros(numFilters, input.columns() + 2*padding - kernelWidth + 1);
         DL4JConv1d conv = new DL4JConv1d(1, filters.size(0), kernelWidth, 1, 4);
+        questionConvFeatureMaps = conv.forward(input, filters, biases);
 
-        questionConvFeatureMaps = conv.forward(input, filters.get(NDArrayIndex.point(0), NDArrayIndex.all(), NDArrayIndex.all()));
-        //nd4j_conv1d conv = new nd4j_conv1d(1, 1, kernelWidth, 1, 4);
-        /*for (int i = 0; i < filters.size(0); i++) {
+        return questionConvFeatureMaps;
+    }
+
+    private INDArray getConvFeatureMapsND4J(INDArray input, INDArray filters, INDArray biases) {
+        int kernelWidth = 5;
+        int padding = 4;
+        INDArray questionConvFeatureMaps = Nd4j.zeros(numFilters, input.columns() + 2*padding - kernelWidth + 1);
+        Nd4jConv1d conv = new Nd4jConv1d(1, 1, kernelWidth, 1, 4);
+
+        for (int i = 0; i < filters.size(0); i++) {
             INDArray filter = filters.get(NDArrayIndex.point(i), NDArrayIndex.all(), NDArrayIndex.all());
             INDArray convOutput = conv.forward(input, filter);
             convOutput.addi(biases.get(NDArrayIndex.point(i)));
             INDArrayIndex featMapIndex[] = { NDArrayIndex.point(i), NDArrayIndex.all() };
             questionConvFeatureMaps.put(featMapIndex, convOutput);
-        }*/
-        //Nd4j.getExecutioner().exec(new Tanh(questionConvFeatureMaps));
+        }
+        Nd4j.getExecutioner().exec(new Tanh(questionConvFeatureMaps));
 
         return questionConvFeatureMaps;
     }
 
     public INDArray forward(INDArray s1, INDArray s2, INDArray externalFeatures) {
         // Convolution
-        INDArray questionConvFeatureMaps = getConvFeatureMaps(s1, s1ConvFilters, s1ConvFilterBiases);
-        INDArray answerConvFeatureMaps = getConvFeatureMaps(s2, s2ConvFilters, s2ConvFilterBiases);
+        INDArray questionConvFeatureMaps = getConvFeatureMapsDL4J(s1, s1ConvFilters, s1ConvFilterBiases);
+        INDArray answerConvFeatureMaps = getConvFeatureMapsDL4J(s2, s2ConvFilters, s2ConvFilterBiases);
 
         // Pooling
         INDArray questionPooled = Nd4j.max(questionConvFeatureMaps, 1);

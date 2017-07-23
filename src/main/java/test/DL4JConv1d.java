@@ -1,20 +1,18 @@
 package test;
 
-import org.deeplearning4j.nn.api.OptimizationAlgorithm;
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
-import org.deeplearning4j.nn.conf.Updater;
 import org.deeplearning4j.nn.conf.layers.ConvolutionLayer;
-import org.deeplearning4j.nn.conf.layers.FeedForwardLayer;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
-import org.deeplearning4j.nn.weights.WeightInit;
 import org.nd4j.linalg.activations.Activation;
 import org.nd4j.linalg.api.ndarray.INDArray;
-import org.nd4j.linalg.convolution.Convolution;
-import org.nd4j.linalg.exception.ND4JException;
 import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.indexing.INDArrayIndex;
 import org.nd4j.linalg.indexing.NDArrayIndex;
+
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
 
 /**
  * Created by jackzhang on 7/20/17.
@@ -34,10 +32,7 @@ public class DL4JConv1d {
         this.padding = padding;
     }
 
-    public INDArray forward(INDArray input, INDArray filter) {
-
-        ConvolutionLayer.Builder builder = new ConvolutionLayer.Builder(this.kernelSize, this.stride, this.padding);
-        //FeedForwardLayer conv = new ConvolutionLayer(builder);
+    public INDArray forward(INDArray input, INDArray filters, INDArray biases) {
         MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
                 .list()
                 .layer(0, new ConvolutionLayer.Builder(input.size(0), this.kernelSize)
@@ -50,6 +45,12 @@ public class DL4JConv1d {
                 .build();
 
         MultiLayerNetwork model = new MultiLayerNetwork(conf);
+
+        model.initializeLayers(input);
+        List<INDArray> params = new ArrayList<>();
+        params.add(biases);
+        params.add(filters);
+        model.setParams(Nd4j.toFlattened('f', params));
         int[] shape = {1, 1, input.size(0), input.size(1)};
         INDArray i = Nd4j.createUninitialized(shape);
         for (int j = 0; j < input.size(0); j++) {
